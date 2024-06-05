@@ -1,0 +1,112 @@
+---
+title: "Logistics Regression - Titanic Dataset"
+author: "Olanrewaju Titilola"
+date: "2024-02-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load Library packages
+```{r}
+library(tidyverse)
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(forcats)
+library(caret)
+```
+
+# Set work directory
+```{r}
+setwd("~/UPLIFT/Course 2/Course 2 - Assignments/Assignment 4 - Logistics Regression")
+
+```
+
+## TRAIN DATASET
+
+#Load datasets
+```{r}
+train_data<-read.csv("train.csv", header = TRUE)
+head(train_data, 5)
+```
+# Calculate and replace missing values in Age column with the mean of all ages
+
+```{r}
+train_data$Age[is.na(train_data$Age)]=mean(train_data$Age, na.rm = TRUE)
+```
+
+```{r}
+view(train_data)
+```
+
+# Load Test Dataset
+```{r}
+test_data<-read.csv("test.csv", header=TRUE)
+head(test_data, 5)
+```
+# Calculate and replace missing values in Age column with the mean of all ages
+
+```{r}
+test_data$Age[is.na(test_data$Age)]= mean(test_data$Age,na.rm = TRUE)
+```
+
+# Check the types of dataset
+```{r}
+str(test_data)
+```
+
+
+# Create dataframe of dependent/independent variables
+```{r}
+nonvars<-c("PassengerId","Name","Ticket","Cabin","Embarked")
+train_data<-train_data[,!(names(train_data)%in%nonvars)]
+str(train_data)
+```
+
+
+## Develop a model for training dataset
+```{r}
+train_model<-glm(Survived~.,data= train_data,family=binomial)
+summary(train_model)
+```
+
+# Prediction of survival on Test dataset
+```{r}
+test_data$predict <- predict(train_model, type = "response", newdata = test_data)
+summary(test_data$predict)
+
+```
+
+# No preference over error t = 0.5
+```{r}
+test_data$survived <- as.numeric(test_data$predict>=0.5) 
+table(test_data$survived)
+
+```
+
+```{r}
+predictions= data.frame(test_data[c("PassengerId","survived")])
+write.csv(file = "TitanicPred", x=predictions,)
+head(predictions,5)
+```
+
+
+## Interpretation of the Coefficients:
+
+
+### Pclass (Passenger Class) (-1.082896):
+**For each decrease in the passenger class, the estimated probability of survival decrease by about 1.08. Lower class is associated with lower chances of survival.**
+
+### Sexmale (-2.763615):
+**Being a male reduces the estimated probability of survival by about 2.76.Being a male significantly decreases the chances of survival compared to females.**
+
+### Age (-0.039746):
+**For each year increase in age, the estimated probability of survival decrease by about 0.04.Getting older is associated with a slight decrease in the chances of survival.**
+
+### SibSp (Siblings/Spouses) (-0.351246):
+**For each additional sibling or spouse onboard, the estimated probability of survival decrease by about 0.35. Having more siblings or spouses onboard is associated with lower chances of survival.**
+
+
